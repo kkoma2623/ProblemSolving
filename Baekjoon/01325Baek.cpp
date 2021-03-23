@@ -8,6 +8,7 @@
 using namespace std;
 
 vector<int> G[MAX_N];
+int aa = 1;
 priority_queue<int, vector<int>, greater<int>> hacked;
 bool visit[MAX_N];
 int N, M;
