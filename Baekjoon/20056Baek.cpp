@@ -1,5 +1,4 @@
 #include <iostream>
-#include <queue>
 #include <vector>
 
 #define MAX_N 51
@@ -25,188 +24,91 @@ void getInput(){
   }
 }
 
-void moveFireballs(int n){
-  if(n%2 == 0){
-    // v1 -> v2
-    vector<info> temp[MAX_N][MAX_N];
+void moveFireballs(vector<info> (*v)[MAX_N], vector<info> (*nextV)[MAX_N]){
+  vector<info> temp[MAX_N][MAX_N];
+  // v1 || v2 -> temp
+  for(int i=1; i<=N; ++i){
+    for(int j=1; j<=N; ++j){
+      if(v[i][j].empty()) continue;
 
-    // v1 -> temp
-    for(int i=1; i<=N; ++i){
-      for(int j=1; j<=N; ++j){
-        if(v1[i][j].empty()) continue;
-
-        for(int v=0; v<v1[i][j].size(); ++v){
-          info t = v1[i][j][v];
-          int nr = i + d[t.d][0]*v1[i][j][v].s, nc = j + d[t.d][1]*v1[i][j][v].s;
-          while(nr > N){
-            nr -= N;
-          }
-          while(nc > N){
-            nc -= N;
-          }
-          while(nr <= 0){
-            nr += N;
-          }
-          while(nc <= 0){
-            nc += N;
-          }
-          temp[nr][nc].push_back(t);
+      for(int k=0; k<v[i][j].size(); ++k){
+        info t = v[i][j][k];
+        int nr = i + d[t.d][0]*v[i][j][k].s, nc = j + d[t.d][1]*v[i][j][k].s;
+        while(nr > N){
+          nr -= N;
         }
-      }
-    }
-
-    // temp -> v2
-    for(int i=1; i<=N; ++i){
-      for(int j=1; j<=N; ++j){
-        v2[i][j].swap(temp[i][j]);
-      }
-    }
-  } else{
-    // v2 -> v1
-    vector<info> temp[MAX_N][MAX_N];
-
-    // v2 -> temp
-    for(int i=1; i<=N; ++i){
-      for(int j=1; j<=N; ++j){
-        if(v2[i][j].empty()) continue;
-
-        for(int v=0; v<v2[i][j].size(); ++v){
-          info t = v2[i][j][v];
-          int nr = i + d[t.d][0]*v2[i][j][v].s, nc = j + d[t.d][1]*v2[i][j][v].s;
-          while(nr > N){
-            nr -= N;
-          }
-          while(nc > N){
-            nc -= N;
-          }
-          while(nr <= 0){
-            nr += N;
-          }
-          while(nc <= 0){
-            nc += N;
-          }
-          temp[nr][nc].push_back(t);
+        while(nc > N){
+          nc -= N;
         }
+        while(nr <= 0){
+          nr += N;
+        }
+        while(nc <= 0){
+          nc += N;
+        }
+        temp[nr][nc].push_back(t);
       }
     }
+  }
 
-    // temp -> v1
-    for(int i=1; i<=N; ++i){
-      for(int j=1; j<=N; ++j){
-        v1[i][j].swap(temp[i][j]);
-      }
+  // temp -> v2 || v1
+  for(int i=1; i<=N; ++i){
+    for(int j=1; j<=N; ++j){
+      nextV[i][j].swap(temp[i][j]);
     }
   }
 }
 
-void mergeFireballs(int n){
-  if(n%2 == 0){
-    // v2
-    for(int r=1; r<=N; ++r){
-      for(int c=1; c<=N; ++c){
-        if(v2[r][c].size() <= 1) continue;
+void mergeFireballs(vector<info> (*v)[MAX_N]){
+  for(int r=1; r<=N; ++r){
+    for(int c=1; c<=N; ++c){
+      if(v[r][c].size() <= 1) continue;
 
-        int m=0, s=0, d=0;
-        int balls = v2[r][c].size();
-        bool dirEven = v2[r][c][0].d % 2 == 0;
-        bool dirSame = true;
-        // merge balls
-        for(int i=0; i<balls; ++i){
-          m += v2[r][c][i].m;
-          s += v2[r][c][i].s;
-          if(dirEven != v2[r][c][i].d % 2 == 0){
-            // check dir
-            dirSame = false;
-          }
+      int m=0, s=0, d=0;
+      int balls = v[r][c].size();
+      bool dirEven = v[r][c][0].d % 2 == 0;
+      bool dirSame = true;
+      // merge balls
+      for(int i=0; i<balls; ++i){
+        m += v[r][c][i].m;
+        s += v[r][c][i].s;
+        if(dirEven != v[r][c][i].d % 2 == 0){
+          // check dir
+          dirSame = false;
         }
-
-        m /= 5;
-        if(m == 0){
-          // remove fireballs
-          vector<info> temp;
-          v2[r][c].swap(temp);
-          continue;
-        }
-
-        s /= balls;
-        vector<info> temp;
-        for(int i=0; i<4; ++i){
-          // seperate balls
-          temp.push_back({m, s, dirSame ? i*2 : i*2+1});
-        }
-
-        // update v2[r][c]
-        v2[r][c].swap(temp);
       }
-    }
-  } else{
-    // v1
-    for(int r=1; r<=N; ++r){
-      for(int c=1; c<=N; ++c){
-        if(v1[r][c].size() <= 1) continue;
 
-        int m=0, s=0, d=0;
-        int balls = v1[r][c].size();
-        bool dirEven = v1[r][c][0].d % 2 == 0;
-        bool dirSame = true;
-        // merge balls
-        for(int i=0; i<balls; ++i){
-          m += v1[r][c][i].m;
-          s += v1[r][c][i].s;
-          if(dirEven != v1[r][c][i].d % 2 == 0){
-            // check dir
-            dirSame = false;
-          }
-        }
-
-        m /= 5;
-        if(m == 0){
-          // remove fireballs
-          vector<info> temp;
-          v1[r][c].swap(temp);
-          continue;
-        }
-
-        s /= balls;
+      m /= 5;
+      if(m == 0){
+        // remove fireballs
         vector<info> temp;
-        for(int i=0; i<4; ++i){
-          // seperate balls
-          temp.push_back({m, s, dirSame ? i*2 : i*2+1});
-        }
-
-        // update v1[r][c]
-        v1[r][c].swap(temp);
+        v[r][c].swap(temp);
+        continue;
       }
+
+      s /= balls;
+      vector<info> temp;
+      for(int i=0; i<4; ++i){
+        // seperate balls
+        temp.push_back({m, s, dirSame ? i*2 : i*2+1});
+      }
+
+      // update v[r][c]
+      v[r][c].swap(temp);
     }
   }
 }
 
-int countFireballs(int n){
+int countFireballs(vector<info> (*v)[MAX_N]){
   int cnt = 0;
-  if(n % 2 != 0){
-    // v2
-    for(int r=1; r<=N; ++r){
-      for(int c=1; c<=N; ++c){
-        if(v2[r][c].size() == 0){
-          continue;
-        }
-
-        for(int i=0; i<v2[r][c].size(); ++i){
-          cnt += v2[r][c][i].m;
-        }
+  for(int r=1; r<=N; ++r){
+    for(int c=1; c<=N; ++c){
+      if(v[r][c].size() == 0){
+        continue;
       }
-    }
-  } else{
-    // v1
-    for(int r=1; r<=N; ++r){
-      for(int c=1; c<=N; ++c){
-        if(v1[r][c].size() == 0){
-          continue;
-        }
 
-        for(int i=0; i<v1[r][c].size(); ++i){
-          cnt += v1[r][c][i].m;
-        }
+      for(int i=0; i<v[r][c].size(); ++i){
+        cnt += v[r][c][i].m;
       }
     }
   }
@@ -218,11 +120,11 @@ int solve(){
   getInput();
 
   for(int i=0; i<K; ++i){
-    moveFireballs(i);
-    mergeFireballs(i);
+    moveFireballs(i % 2 == 0 ? v1 : v2, i % 2 == 0 ? v2 : v1);
+    mergeFireballs(i % 2 == 0 ? v2 : v1);
   }
 
-  return countFireballs(K);
+  return countFireballs(K % 2 == 0 ? v1 : v2);
 }
 
 int main(){
