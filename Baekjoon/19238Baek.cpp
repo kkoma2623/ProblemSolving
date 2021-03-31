@@ -1,170 +1,250 @@
 #include <iostream>
-#include <vector>
 #include <queue>
-#define MAX_N 20
-#define INF 987654321
+
+#define MAX_N 21
 
 using namespace std;
 
-int N;
-int road[MAX_N+2][MAX_N+2];
-int way[4][2] = {{1,0}, {-1,0}, {0,1}, {0,-1}};
-int visited[MAX_N+2][MAX_N+2];
+struct pos{
+  int r, c;
 
-struct customer{
-  int number;
-  pair<int, int> start;
-  pair<int, int> goal;
+  bool operator<(const pos& p)const{
+    if(r == p.r){
+      return c < p.c;
+    }
+    
+    return r < p.r;
+  }
+  bool operator>(const pos& p)const{
+    if(r == p.r){
+      return c > p.c;
+    }
+    
+    return r > p.r;
+  }
 };
 
-void visitedClear(){
-  for(int i=1; i<=N; ++i){
-    for(int j=1; j<=N; ++j){
-      if(road[i][j] == 1){
-        visited[i][j] = INF;
-      }
-      else{
-        visited[i][j] = 1;
-      }
+struct strt{
+  int dist;
+  pos p;
+  pos d;
+  int pNum;
+
+  bool operator<(const strt& st)const{
+    if(dist == st.dist){
+      return p < st.p;
+    }
+
+    return dist < st.dist;
+  }
+  bool operator>(const strt& st)const{
+    if(dist == st.dist){
+      return p > st.p;
+    }
+
+    return dist > st.dist;
+  }
+};
+
+int nSize, passengerSize;
+long long fuel;
+int map[MAX_N][MAX_N];
+pos taxi;
+pos start[MAX_N*MAX_N];
+pos dest[MAX_N*MAX_N];
+int dir[4][2] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+
+void getInput(){
+  cin >> nSize >> passengerSize >> fuel;
+  for(int r=1; r<=nSize; ++r){
+    for(int c=1; c<=nSize; ++c){
+      cin >> map[r][c];
     }
   }
-  for(int i=0; i<=N; ++i){
-    visited[i][0] = INF;
-    visited[0][i] = INF;
-    visited[i][N+1] = INF;
-    visited[N+1][i] = INF;
+
+  cin >> taxi.r >> taxi.c;
+
+  for(int m=0; m<passengerSize; ++m){
+    cin >> start[m].r >> start[m].c >> dest[m].r >> dest[m].c;
   }
 }
 
-void bfsFindCloser(pair<int, int> taxi){
+strt findShortestPassenger(int r, int c){
+  int _map[nSize + 1][nSize + 1];
+  for(int i=1; i<=nSize; ++i){
+    for(int j=1; j<=nSize; ++j){
+      if(map[i][j] == 1){
+        _map[i][j] = 987654321;
+        continue;
+      }
+      _map[i][j] = map[i][j];
+    }
+  }
+  
+  _map[r][c] = 0;
+  
+  queue<pair<int, pos>> q;
+  q.push({0, {r, c}});
 
-  queue<pair<int, int>> q;
-  for(int i=0; i<4; ++i){
-    if(road[taxi.first+way[i][0]][taxi.second+way[i][1]] != INF && visited[taxi.first+way[i][0]][taxi.second+way[i][1]] != INF
-     && taxi.first+way[i][0] > 0 && taxi.first+way[i][0] <= N  && taxi.second+way[i][1] > 0 && taxi.second+way[i][1] <= N){
-       q.push({taxi.first+way[i][0], taxi.second+way[i][1]});
-       visited[taxi.first+way[i][0]][taxi.second+way[i][1]] = 1;
+  while(!q.empty()){
+    pos nv = q.front().second;
+    int dist = q.front().first + 1; q.pop();
+
+    for(int d=0; d<4; ++d){
+      int nr = nv.r + dir[d][0], nc = nv.c + dir[d][1];
+      if(nr < 1 || nc < 1 || nr > nSize || nc > nSize){
+        // out of bound
+        continue;
+      }
+      if(map[nr][nc] == 1){
+        // wall
+        continue;
+      }
+      if(_map[nr][nc] != 0){
+        // visited
+        continue;
+      }
+      if(nr == r && nc == c){
+        // taxi position
+        continue;
+      }
+      
+      _map[nr][nc] = dist;
+      q.push({dist, {nr, nc}});
     }
   }
 
-  while(!q.empty()){
-    pair<int, int> start = q.front(); q.pop();
-    for(int i=0; i<4; ++i){
-      if(road[start.first+way[i][0]][start.second+way[i][1]] != INF && visited[start.first+way[i][0]][start.second+way[i][1]] == 1
-      && start.first+way[i][0] > 0 && start.first+way[i][0] <= N  && start.second+way[i][1] > 0 && start.second+way[i][1] <= N){
-        q.push({start.first+way[i][0], start.second+way[i][1]});
-        visited[start.first+way[i][0]][start.second+way[i][1]] += visited[start.first][start.second];
+  for(int i=1; i<=nSize; ++i){
+    for(int j=1; j<=nSize; ++j){
+      if(i == r && j == c){
+        continue;
+      }
+      if(_map[i][j] == 0){
+        _map[i][j] = 987654321;
       }
     }
   }
 
-  for(int i=0; i<4; ++i){
-    if(road[taxi.first+way[i][0]][taxi.second+way[i][1]] != INF && visited[taxi.first+way[i][0]][taxi.second+way[i][1]] != INF
-     && taxi.first+way[i][0] > 0 && taxi.first+way[i][0] <= N  && taxi.second+way[i][1] > 0 && taxi.second+way[i][1] <= N){
-       visited[taxi.first+way[i][0]][taxi.second+way[i][1]] = 1;
+  priority_queue<strt, vector<strt>, greater<strt>> pq;
+  for(int i=0; i<passengerSize; ++i){
+    pos passenger = start[i];
+    pos destination = dest[i];
+    if(passenger.r < 1 || passenger.c < 1 || passenger.r > nSize || passenger.c > nSize){
+      continue;
+    }
+    pq.push({_map[passenger.r][passenger.c], {passenger.r, passenger.c}, {destination.r, destination.c}, i});
+  }
+
+  return pq.top();
+}
+
+bool checkCanGo(strt nP){
+  return nP.dist <= fuel;
+}
+
+int destinationDist(strt passenger){
+  int _map[nSize+1][nSize+1];
+  for(int i=1; i<=nSize; ++i){
+    for(int j=1; j<=nSize; ++j){
+      if(map[i][j] == 1){
+        _map[i][j] = 987654321;
+        continue;
+      }
+      _map[i][j] = map[i][j];
     }
   }
+
+  int r = passenger.p.r, c = passenger.p.c;
+  _map[r][c] = 0;
+  
+  queue<pair<int, pos>> q;
+  q.push({0, {r, c}});
+
+  while(!q.empty()){
+    pos nv = q.front().second;
+    int dist = q.front().first + 1; q.pop();
+
+    for(int d=0; d<4; ++d){
+      int nr = nv.r + dir[d][0], nc = nv.c + dir[d][1];
+      if(nr < 1 || nc < 1 || nr > nSize || nc > nSize){
+        // out of bound
+        continue;
+      }
+      if(map[nr][nc] == 1){
+        // wall
+        continue;
+      }
+      if(_map[nr][nc] != 0){
+        // visited
+        continue;
+      }
+      if(nr == r && nc == c){
+        // passenger position
+        continue;
+      }
+
+      _map[nr][nc] = dist;
+      q.push({dist, {nr, nc}});
+    }
+  }
+
+  for(int i=1; i<=nSize; ++i){
+    for(int j=1; j<=nSize; ++j){
+      if(i == r && j == c){
+        continue;
+      }
+      if(_map[i][j] == 0){
+        _map[i][j] = 987654321;
+      }
+    }
+  }
+
+  return _map[passenger.d.r][passenger.d.c];
+}
+
+void taxiMove(strt nP){
+  int pNum = nP.pNum;
+  start[pNum].r = -1;
+  start[pNum].c = -1;
+  dest[pNum].r = -1;
+  dest[pNum].c = -1;
+  taxi.r = nP.d.r;
+  taxi.c = nP.d.c;
+}
+
+void solve(){
+  getInput();
+
+  for(int i=0; i<passengerSize; ++i){
+    strt nP = findShortestPassenger(taxi.r, taxi.c);
+    // check can go
+    bool canGo = checkCanGo(nP);
+    if(!canGo){
+      // can't go
+      cout << -1;
+      return;
+    }
+    fuel -= nP.dist;
+    //check can go to destination
+    int usedFuel = destinationDist(nP);
+    if(usedFuel > fuel){
+      // can't go
+      cout << -1;
+      return;
+    }
+
+    // can take and go
+    fuel += usedFuel;
+    taxiMove(nP);
+  }
+
+  cout << fuel;
 }
 
 int main(){
   ios::sync_with_stdio(false);
   cin.tie(0);
+  solve();
 
-  int M, F; cin >> N >> M  >> F;
-
-  for(int i=1; i<=N; ++i){
-    for(int j=1; j<=N; ++j){
-      cin >> road[i][j];
-      if(road[i][j] == 1){
-      }
-    }
-  }
-
-  pair<int, int> taxi; cin >> taxi.first >> taxi.second;
-  vector<customer> c(M);
-  
-  cout << "\n" << "\n";
-  for(int i=0; i<M; ++i){
-    cin >> c[i].start.first >> c[i].start.second >> c[i].goal.first >> c[i].goal.second;
-    c[i].number = i+1;
-  }
-
-  for(int cc=0; cc<M; ++cc){
-    // 거리 초기화
-    visitedClear();
-    visited[taxi.first][taxi.second] = 0;
-
-    // 거리 갱신
-    bfsFindCloser(taxi);
-    
-    // 얼마 걸리나, 누가
-    // 거리, 누구
-    pair<int, int> son = {visited[c[0].start.first][c[0].start.second], c[0].number};
-    cout << son.second << " start\n";
-    for(auto iter=c.begin() + 1; iter!=c.end(); ++iter){
-      // 더 작은놈 찾음
-      if(son.first > visited[(*iter).start.first][(*iter).start.second]){
-        cout << "find smaller\n";
-        son = {visited[(*iter).start.first][(*iter).start.second], (*iter).number};
-      }
-      // 같은놈 찾음
-      else if(son.first == visited[(*iter).start.first][(*iter).start.second]){
-        // 같은놈에 행이 더 작은놈 찾음
-        if(c[son.second-1].start.first > c[(*iter).number-1].start.first){
-          cout << "row lower\n";
-          son = {visited[(*iter).start.first][(*iter).start.second], (*iter).number};
-        }
-        // 같은놈에 행도 같음
-        else if (c[son.second-1].start.first == c[(*iter).number-1].start.first) {
-          // 같은놈에 행도 같지만 열이 더 작은놈 찾음
-          if (c[son.second-1].start.second > c[(*iter).number-1].start.second){
-            son = {visited[(*iter).start.first][(*iter).start.second], (*iter).number};
-          }
-        }
-      }
-    }
-    cout << son.second << " is \n";
-
-    // 최단거리가 연로 바닥나면 끝냄
-    if(son.first > F){
-      cout << -1;
-      return 0;
-    }
-
-    // 연료 빼주고.
-    F -= son.first;
-
-    // 목적지 가야지
-    // 거리 초기화
-    visitedClear();
-    // 택시 이동.
-    taxi = c[son.second - 1].start;
-    // 거리 갱신
-    bfsFindCloser(taxi);
-    cout << "\n";
-    for(int i=1; i<=N; ++i){
-      for(int j=1; j<=N; ++j){
-        cout << visited[i][j] << " ";
-      }
-      cout << "\n";
-    }
-    // 연료 넘으면 -1
-    if(visited[c[son.second - 1].goal.first][c[son.second - 1].goal.second] > F){
-      cout << -1;
-      return 0;
-    }
-    cout << F << " before Fuel\n";
-    // 연료 갱신
-    F += visited[c[son.second - 1].goal.first][c[son.second - 1].goal.second];
-    cout << F << " charged Fuel\n";
-    // 손님 지우기
-    c.erase(c.begin() + son.second - 1);
-
-    for(int i=0; i<c.size(); ++i){
-      cout << c[i].number << " remain\n";
-    }
-  }
-
-  cout << F;
   return 0;
 }
