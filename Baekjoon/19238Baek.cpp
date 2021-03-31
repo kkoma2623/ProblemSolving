@@ -69,18 +69,7 @@ void getInput(){
   }
 }
 
-strt findShortestPassenger(int r, int c){
-  int _map[nSize + 1][nSize + 1];
-  for(int i=1; i<=nSize; ++i){
-    for(int j=1; j<=nSize; ++j){
-      if(map[i][j] == 1){
-        _map[i][j] = 987654321;
-        continue;
-      }
-      _map[i][j] = map[i][j];
-    }
-  }
-  
+queue<pair<int, pos>> distMap(int r, int c, int _map[][MAX_N]){
   _map[r][c] = 0;
   
   queue<pair<int, pos>> q;
@@ -108,12 +97,28 @@ strt findShortestPassenger(int r, int c){
         // taxi position
         continue;
       }
-      
+
       _map[nr][nc] = dist;
       q.push({dist, {nr, nc}});
     }
   }
 
+  return q;
+}
+
+void initDistMap(int _map[][MAX_N]){
+  for(int i=1; i<=nSize; ++i){
+    for(int j=1; j<=nSize; ++j){
+      if(map[i][j] == 1){
+        _map[i][j] = 987654321;
+        continue;
+      }
+      _map[i][j] = map[i][j];
+    }
+  }
+}
+
+void distMapWall(int r, int c, int _map[][MAX_N]){
   for(int i=1; i<=nSize; ++i){
     for(int j=1; j<=nSize; ++j){
       if(i == r && j == c){
@@ -124,6 +129,13 @@ strt findShortestPassenger(int r, int c){
       }
     }
   }
+}
+
+strt findShortestPassenger(int r, int c){
+  int _map[MAX_N][MAX_N];
+  initDistMap(_map);
+  queue<pair<int, pos>> q = distMap(r, c, _map);
+  distMapWall(r, c, _map);
 
   priority_queue<strt, vector<strt>, greater<strt>> pq;
   for(int i=0; i<passengerSize; ++i){
@@ -143,61 +155,12 @@ bool checkCanGo(strt nP){
 }
 
 int destinationDist(strt passenger){
-  int _map[nSize+1][nSize+1];
-  for(int i=1; i<=nSize; ++i){
-    for(int j=1; j<=nSize; ++j){
-      if(map[i][j] == 1){
-        _map[i][j] = 987654321;
-        continue;
-      }
-      _map[i][j] = map[i][j];
-    }
-  }
+  int _map[MAX_N][MAX_N];
+  initDistMap(_map);
 
   int r = passenger.p.r, c = passenger.p.c;
-  _map[r][c] = 0;
-  
-  queue<pair<int, pos>> q;
-  q.push({0, {r, c}});
-
-  while(!q.empty()){
-    pos nv = q.front().second;
-    int dist = q.front().first + 1; q.pop();
-
-    for(int d=0; d<4; ++d){
-      int nr = nv.r + dir[d][0], nc = nv.c + dir[d][1];
-      if(nr < 1 || nc < 1 || nr > nSize || nc > nSize){
-        // out of bound
-        continue;
-      }
-      if(map[nr][nc] == 1){
-        // wall
-        continue;
-      }
-      if(_map[nr][nc] != 0){
-        // visited
-        continue;
-      }
-      if(nr == r && nc == c){
-        // passenger position
-        continue;
-      }
-
-      _map[nr][nc] = dist;
-      q.push({dist, {nr, nc}});
-    }
-  }
-
-  for(int i=1; i<=nSize; ++i){
-    for(int j=1; j<=nSize; ++j){
-      if(i == r && j == c){
-        continue;
-      }
-      if(_map[i][j] == 0){
-        _map[i][j] = 987654321;
-      }
-    }
-  }
+  distMap(r, c, _map);
+  distMapWall(r, c, _map);
 
   return _map[passenger.d.r][passenger.d.c];
 }
