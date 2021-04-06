@@ -8,12 +8,6 @@
 
 using namespace std;
 
-struct strt{
-  int num;
-  int buildTime;
-};
-
-
 int T, N, K, W;
 int buildTime[MAX_N+1];
 int dime[MAX_N+1];
