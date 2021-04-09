@@ -5,4 +5,4 @@
 * It is welcome to comment on my codes. It will be very helpful to me.
 
 # Problem solving commentary blog
-[Woogie's velog blog](https://velog.io/@kkoma2623)
+* [Woogie's velog blog](https://velog.io/@kkoma2623)
