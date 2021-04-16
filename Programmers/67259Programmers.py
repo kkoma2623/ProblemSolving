@@ -1,5 +1,6 @@
 import sys
 import copy
+from collections import deque
 sys.setrecursionlimit(2000)
 
 dir = [[0, 1], [0, -1], [1, 0], [-1, 0]]
@@ -8,15 +9,16 @@ def bfs(board, boardCopy):
     
     maxR = len(board)
     maxC = len(board[0])
-            
-    q = [{'r': 0, 'c': 0, 'cost': 0, 'dirNum': 4}]
+    q = deque()
+    q.append({'r': 0, 'c': 0, 'cost': 0, 'dirNum': 4})
     
     while len(q):
-        curr = q.pop(0)
-        print(curr)
+        curr = q.popleft()
+        # print(curr)
         # if nr < 0 or nc < 0 or nr >= maxR or nc >= maxC:
         if boardCopy[curr['r']][curr['c']] < curr['cost']:
             continue
+        
         boardCopy[curr['r']][curr['c']] = curr['cost']
         for i in range(0, 4):
             nr = curr['r'] + dir[i][0]
@@ -48,5 +50,3 @@ def solution(board):
     bfs(board, boardCopy)
     answer = boardCopy[len(board)-1][len(board[0])-1]
     return answer
-
-solution([[0,0,0],[0,0,0],[0,0,0]])
