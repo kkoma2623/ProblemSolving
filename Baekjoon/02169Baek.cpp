@@ -21,17 +21,6 @@ void getInput(){
 }
 
 int dfs(int r, int c, int d){
-  for(int i=0; i<N; ++i){
-    for(int j=0; j<M; ++j){
-      cout << "(";
-      for(int k=0; k<3; ++k){
-        cout << cost[i][j][k] << ", ";
-      }
-      cout << ")";
-    }
-    cout << "\n";
-  }
-  cout << "\n=============\n";
   if(r == N - 1 && c == M - 1){
     return board[r][c];
   }
@@ -40,7 +29,6 @@ int dfs(int r, int c, int d){
   }
 
   visit[r][c] = true;
-
   int maxi = MINCOST;
   for(int i=0; i<3; i++){
     int nr = r + dir[i][0];
