@@ -10,11 +10,8 @@ int main() {
   ios::sync_with_stdio(false);
   cin.tie(0);
   
-  string str; cin >> str;
-  vec.push_back(str);
-  while(str[(int)str.size()-1] != ']'){
-    cin >> str;
-    vec.push_back(str);
+  for(int i=0; i<100000; ++i){
+    cout << " 2 2";
   }
 
   return 0;
