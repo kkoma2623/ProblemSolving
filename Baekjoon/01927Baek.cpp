@@ -9,7 +9,7 @@ int main(){
 
   int testCases;
   cin >> testCases;
-  priority_queue<int, vector<int>,  greater<int>> pq;
+  priority_queue<int, vector<int>,  greater<int> > pq;
   for(int testCase=0; testCase<testCases; testCase++){
     int val;
     cin >> val;
