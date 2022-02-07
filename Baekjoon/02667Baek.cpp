@@ -1,68 +1,105 @@
 #include <iostream>
 #include <string>
-#include <map>
-#include <queue>
 
 #define MAX_N 25
 
 using namespace std;
 
-int n;
-int dir[4][2] = {{-1,0}, {1,0}, {0,-1}, {0,1}};
 int room[MAX_N+1][MAX_N+1];
-bool visit[MAX_N+1][MAX_N+1];
+bool visited[MAX_N+1][MAX_N+1];
+bool colorVisited[MAX_N+1][MAX_N+1];
+int n;
+int dir[4][2] = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}};
+int groupNum;
 
-int dfs(int row, int col, int cnt){
-  if(row<0 || row >= n || col < 0 || col >= n || visit[row][col]) return 0;
-  visit[row][col] = true;
-  if(room[row][col] == 0) return 0;
-  
-  room[row][col] += cnt;
-  for(int i=0; i<4; ++i){
-    dfs(row+dir[i][0], col+dir[i][1], cnt);
+bool boundCheck(int row, int col){
+  return row<0 || row>=n || col<0 || col>=n;
+}
+
+void printVisit(){
+  for(int i=0; i<n; ++i){
+    for(int j=0; j<n; ++j){
+      cout << visited[i][j] << " ";
+    }cout << "\n";
+  }
+}
+
+void dfs(int row, int col, bool color){
+  if(boundCheck(row, col)){
+    return;
+  }
+  if(visited[row][col]){
+    return;
   }
 
-  return 1;
+  if(color){
+    if(room[row][col] == 0){
+      return;
+    }
+    if(colorVisited[row][col]){
+      return;
+    }
+    room[row][col] = groupNum;
+    colorVisited[row][col] = true;
+    for(int i=0; i<4; ++i){
+      int nr = row + dir[i][0];
+      int nc = col + dir[i][1];
+      dfs(nr, nc, true);
+    }
+  } else{
+    if(room[row][col] == 1 && !colorVisited[row][col]){
+      room[row][col] = ++groupNum;
+      for(int i=0; i<4; ++i){
+        int nr = row + dir[i][0];
+        int nc = col + dir[i][1];
+        dfs(nr, nc, true);
+      }
+      colorVisited[row][col] = true;
+    }
+  }
+
+  visited[row][col] = true;
+  for(int i=0; i<2; ++i){
+    int nr = row + dir[i][0];
+    int nc = col + dir[i][1];
+    dfs(nr, nc, false);
+  }
+}
+
+void getInput(){
+  cin >> n;
+  for(int row=0; row<n; ++row){
+    string temp; cin >> temp;
+    for(int col=0; col<n; ++col){
+      char tt = temp[col];
+      room[row][col] = tt-'0';
+    }
+  }
+  groupNum = 1;
+}
+
+void printRoom(){
+  for(int i=0; i<n; ++i){
+    for(int j=0; j<n; ++j){
+      cout << room[i][j] << " ";
+    }cout << "\n";
+  }
+}
+
+void solve(){
+  getInput();
+  dfs(0, 0, false);
+
+  printRoom();
+  cout << "\n===\n";
+  printVisit();
 }
 
 int main(){
   ios::sync_with_stdio(false);
   cin.tie(0);
 
-  cin >> n;
-  for(int i=0; i<n; ++i){
-    string tempStr; cin >> tempStr;
-    for(int j=0; j<n; ++j){
-      room[i][j] = tempStr[j]-'0';
-    }
-  }
-  int cnt = 0;
-  for(int i=0; i<n; ++i){
-    for(int j=0; j<n; ++j){
-      cnt += dfs(i, j, cnt);
-    }
-  }
-
-  map<int, int> m;
-  for(int i=0; i<n; ++i){
-    for(int j=0; j<n; ++j){
-      if(room[i][j] != 0){
-        ++m[room[i][j]];
-      }
-    }
-  }
-
-  priority_queue<int, vector<int>, greater<int>> pq;
-  for(auto iter=m.begin(); iter!=m.end(); ++iter){
-    pq.push((*iter).second);
-  }
-
-  cout << pq.size() << "\n";
-
-  while(!pq.empty()){
-    cout << pq.top() << "\n";
-    pq.pop();
-  }
+  solve();
 
   return 0;
 }
