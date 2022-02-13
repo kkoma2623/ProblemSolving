@@ -3,6 +3,5 @@
     "initializer_list": "cpp",
     "iostream": "cpp",
     "iosfwd": "cpp"
-  },
-  "C_Cpp.errorSquiggles": "Disabled"
+  }
 }
