@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 
 #define MAX_N 300
 
@@ -6,11 +7,7 @@ using namespace std;
 
 int stairCnt;
 int stairs[MAX_N+1];
-long long dp[MAX_N+1];
-
-int maxi(int a, int b){
-    return a > b ? a : b;
-}
+int dp[MAX_N+1];
 
 void getInput(){
     cin >> stairCnt;
@@ -20,14 +17,14 @@ void getInput(){
     dp[0] = 0;
     dp[1] = stairs[1];
     dp[2] = stairs[2] + stairs[1];
-    dp[3] = maxi(dp[1], stairs[2]) + stairs[3];
-    dp[4] = maxi(dp[2], dp[1] + stairs[3]) + stairs[4];
-    // dp[n] = maxi(dp[n-2], dp[n-3] + stairs[n-1]) + stairs[n];
+    dp[3] = max(dp[1], stairs[2]) + stairs[3];
+    dp[4] = max(dp[2], dp[1] + stairs[3]) + stairs[4];
+    // dp[n] = max(dp[n-2], dp[n-3] + stairs[n-1]) + stairs[n];
 }
 
 void dpFunc(){
     for(int i=5; i<=stairCnt; ++i){
-        dp[i] = maxi(dp[i-2], dp[i-3] + stairs[i-1]) + stairs[i];
+        dp[i] = max(dp[i-2], dp[i-3] + stairs[i-1]) + stairs[i];
     }
 
     cout << dp[stairCnt];
