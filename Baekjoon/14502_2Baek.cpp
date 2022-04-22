@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <queue>
 
 #define MAX_N 8
 #define MAX_M 8
@@ -65,6 +66,31 @@ void dfs(int &r, int &c){
     }
 }
 
+void bfs(){
+    queue<pos> zerosQ;
+
+    for(int r=0; r<N; ++r){
+        for(int c=0; c<M; ++c){
+            if(tempG[r][c] != 2) continue;
+            zerosQ.push({r, c});
+        }
+    }
+
+    while(!zerosQ.empty()){
+        pos curr = zerosQ.front(); zerosQ.pop();
+        if(visited[curr.r][curr.c]) continue;
+        visited[curr.r][curr.c] = true;
+
+        tempG[curr.r][curr.c] = 2;
+        for(int i=0; i<4; ++i){
+            int nextR = curr.r + dir[i][0], nextC = curr.c + dir[i][1];
+            if(outOfBound(nextR, nextC)) continue;
+            if(tempG[nextR][nextC] != 0) continue;
+            zerosQ.push({nextR, nextC});
+        }
+    }
+}
+
 int countSafe(){
     int ret = 0;
     for(int r=0; r<N; ++r){
@@ -76,15 +102,6 @@ int countSafe(){
     return ret;
 }
 
-void printTempG(){
-    cout << "\n==========\n";
-    for(int r=0; r<N; ++r){
-        for(int c=0; c<M; ++c){
-            cout << tempG[r][c] << " ";
-        }cout << "\n";
-    }
-}
-
 void solve(){
     getInputs();
 
@@ -94,15 +111,15 @@ void solve(){
             for(int k=j+1; k<zeros.size(); ++k){
                 fillTempG(zeros[i], zeros[j], zeros[k]);
                 initVisited();
-                for(int r=0; r<N; ++r){
-                    for(int c=0; c<M; ++c){
-                        if(tempG[r][c] != 2) continue;
-                        dfs(r, c);
-                    }
-                }
+                // for(int r=0; r<N; ++r){
+                //     for(int c=0; c<M; ++c){
+                //         if(tempG[r][c] != 2) continue;
+                //         dfs(r, c);
+                //     }
+                // }
+                bfs();
                 int safeZones = countSafe();
                 maxi = max(maxi, safeZones);
-                // printTempG();
             }
         }
     }
