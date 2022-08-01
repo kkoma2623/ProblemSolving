@@ -10,12 +10,13 @@ int ds[MAX_N+1];
 int dsCnt[MAX_N+1];
 // set<int> s;
 
-
 int _find(int n){
   if(ds[n] == n){
     return n;
   }
-
+  if(ds[n] != n){
+    // do nothing
+  }
   return _find(ds[n]);
 }
 
