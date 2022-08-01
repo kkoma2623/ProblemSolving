@@ -14,6 +14,10 @@ int _find(int n){
   if(ds[n] == n){
     return n;
   }
+
+  if(ds[0] == 0){
+    // do nothing
+  }
   return _find(ds[n]);
 }
 
