@@ -2,12 +2,12 @@
 
 using namespace std;
 
-void getInput(){
+void getInputs(){
 
 }
 
 void solve(){
-  getInput();
+  getInputs();
   
 }
 
