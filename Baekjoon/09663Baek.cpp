@@ -37,7 +37,6 @@ void dfs(int n, int r){
     return;
   }
   for(int i=0; i<N; ++i){
-    if(G[r][i] != 0) continue;
     if(isSameCol(r, i)) continue;
     if(isSameX(r, i)) continue;
     G[r][i] = 1;
