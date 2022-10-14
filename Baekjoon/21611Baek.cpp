@@ -1,272 +1,275 @@
 #include <iostream>
 #include <vector>
-#include <map>
 #include <queue>
 
-#define MAX_N 55
+#define MAX_N 49
+#define MAX_M 100
 
 using namespace std;
 
-int N, M;
-int G[MAX_N+1][MAX_N+1];
-int dir[5][2] = {{0, 0}, {-1, 0}, {1, 0}, {0, -1}, {0, 1}};
-int goDir[4][2] = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}};
+typedef unsigned long long ull;
+
+struct dirS{
+    int d, s;
+};
 struct pos{
     int r, c;
-    int s;
+    bool operator==(const pos &cmp)const{
+        return r == cmp.r && c == cmp.c;
+    }
 };
-struct group{
-    int g;
-    int cnt;
-};
-vector<pos> ds;
-vector<int> changeDirPos;
-map<int, pos> m;
-int g1, g2, g3;
+
+int N, M;
+int G[MAX_N+1][MAX_N+1];
+vector<dirS> ds;
+int dir[5][2] = {{0, 0}, {-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+int sharkR, sharkC;
+ull ones, twos, threes;
+
+void moveG(queue<int> q);
+void printG();
 
 void getInputs(){
     cin >> N >> M;
+    sharkR = (N+1)/2; sharkC = (N+1)/2;
     for(int r=1; r<=N; ++r){
         for(int c=1; c<=N; ++c){
             cin >> G[r][c];
         }
     }
     for(int i=0; i<M; ++i){
-        int d, s; cin >> d >> s;
-        ds.push_back({dir[d][0], dir[d][1], s});
+        dirS temp; cin >> temp.d >> temp.s;
+        ds.push_back(temp);
     }
 }
 
-void setChangeDirPos(){
-    vector<int> temp;
-    for(int i=1; i<N; ++i){
-        temp.push_back(i);
-        temp.push_back(i);
-    }
+int getMoveDir(int r, int c){
+    int con = N+1;
+    if (r == (N+1)/2 && c == (N+1)/2) return 3;
+    if (r == (N+1)/2 && c == (N+1)/2 - 1) return 2;
+    if(r-c <= 0 && r+c > con) return 1;
+    if(r-c >= 1 && r+c < con) return 2;
+    if(r+c <= con && r-c < 1) return 3;
+    if(r+c >= con && r-c > 0) return 4;
 
-    int ret = 0;
-    changeDirPos.push_back(ret);
-    for(auto t: temp){
-        ret += t;
-        changeDirPos.push_back(ret);
+    return 0;
+}
+
+bool isOutOfBound(int r, int c){
+    return r<1 || c<1 || r>N || c>N;
+}
+
+void countBallNums(int bn){
+    switch(bn){
+        case 1:
+            ++ones;
+            return;
+        case 2:
+            ++twos;
+            return;
+        case 3:
+            ++threes;
+            return;
+        default:
+            return;
     }
 }
 
-bool outOfBound(int r, int c){
-    return (r<1 || c<1 || r>N || c>N);
-}
+bool boom(){
+    queue<int> q;
+    q.push(G[(N+1)/2][(N+1)/2]);
+    pos curr = {(N+1)/2, (N+1)/2};
+    queue<int> balls;
+    bool ret = false;
 
-void blizard(int magicNum){
-    int r = ds[magicNum].r, c = ds[magicNum].c, s = ds[magicNum].s;
-    int sharkR = (N+1)/2, sharkC = (N+1)/2;
-    int currR = r + sharkR, currC = c + sharkC;
-    for(int i=1; i<=s; ++i){
-        if(outOfBound(currR, currC)) return;
-        G[currR][currC] = 0;
-        currR += r;
-        currC += c;
-    }
-}
-
-void setGIndex(){
-    int posNum = 0;
-    int posDiff = 0;
-    int goDirPos = 0;
-
-    int r = (N+1)/2, c = (N+1)/2;
-    pos curr = {r, c};
-    for(int i=0; i<N*N; ++i){
-        int currPos = i;
-        m[i] = curr;
-        if(changeDirPos[posNum] == currPos){
-            ++goDirPos;
-            ++posNum;
+    while(true){
+        int dirIdx = getMoveDir(curr.r, curr.c);
+        pos next = {curr.r + dir[dirIdx][0], curr.c + dir[dirIdx][1]};
+        int currNum = q.front();
+        if(currNum == G[next.r][next.c]){
+            q.push(G[next.r][next.c]);
+            curr = next;
+            continue;
         }
-        curr = {curr.r + goDir[goDirPos%4][0], curr.c + goDir[goDirPos%4][1]};
+        if(G[next.r][next.c] == 0) break;
+        
+        if(q.size() >= 4){
+            int ballNum = q.front();
+            ret = true;
+            while(!q.empty()){
+                q.pop();
+                countBallNums(ballNum);
+            }
+        } else{
+            while(!q.empty()){
+                balls.push(q.front());
+                q.pop();
+            }
+        }
+        q.push(G[next.r][next.c]);
+        curr = next;
     }
+    if(q.size() >= 4){
+        ret = true;
+        int ballNum = q.front();
+        while(!q.empty()){
+            countBallNums(ballNum);
+            q.pop();
+        }
+    }
+    while(!q.empty()){
+        balls.push(q.front());
+        q.pop();
+    }
+
+    moveG(balls);
+    
+    return ret;
+}
+
+void moveG(queue<int> q){
+    pos curr = {(N+1)/2, (N+1)/2};
+    for(int r=1; r<=N; ++r){
+        for(int c=1; c<=N; ++c){
+            G[r][c] = 0;
+        }
+    }
+    while(!q.empty()){
+        if(isOutOfBound(curr.r, curr.c)) return;
+        int dirIdx = getMoveDir(curr.r, curr.c);
+        int currNum = q.front(); q.pop();
+        G[curr.r][curr.c] = currNum;
+
+        pos next = {curr.r + dir[dirIdx][0], curr.c + dir[dirIdx][1]};
+        curr = next;
+    }
+}
+
+void blizard(int d, int s){
+    queue<pos> posQ;
+    for(int i=1; i<=s; ++i){
+        int r = sharkR + dir[d][0]*i, c = sharkC + dir[d][1]*i;
+        if(isOutOfBound(r, c)) return;
+        G[r][c] = 0;
+        posQ.push({r, c});
+    }
+
+    pos curr = {(N+1)/2, (N+1)/2};
+    queue<int> q;
+    q.push(0);
+
+    while(true){
+        if(!posQ.empty()){
+            pos pq = posQ.front();
+            if(pq == curr){
+                posQ.pop();
+                int dirIdx = getMoveDir(curr.r, curr.c);
+                curr = {curr.r + dir[dirIdx][0], curr.c + dir[dirIdx][1]};
+                continue;
+            }
+        }
+        if(G[curr.r][curr.c] != 0){
+            q.push(G[curr.r][curr.c]);
+        }
+        
+        int dirIdx = getMoveDir(curr.r, curr.c);
+        curr = {curr.r + dir[dirIdx][0], curr.c + dir[dirIdx][1]};
+        if(curr.r == 1 && curr.c == 1) {
+            // cout << "???????\n";
+            if(G[curr.r][curr.c] != 0){
+                q.push(G[curr.r][curr.c]);
+            }
+            break;
+        }
+        // if(isOutOfBound(curr.r, curr.c)) break;
+    }
+
+    moveG(q);
 }
 
 void printG(){
-    cout << "\n=======\n";
+    cout << "=====\n";
     for(int r=1; r<=N; ++r){
         for(int c=1; c<=N; ++c){
             cout << G[r][c] << " ";
         }cout << "\n";
     }
+    cout << "=====\n";
 }
 
-void removeTails(){
-    vector<int> v;
-    for(int i=N*N-1; i>=0; --i){
-        pos curr = m[i];
-        if(G[curr.r][curr.c] != 0 && v.size() == 0){
-            v.push_back(i);
-            continue;
-        }
-        if(G[curr.r][curr.c] != 0){
-            v.push_back(i);
-            continue;
-        }
-        if(i == 0){
-            for(auto vv: v){
-                v.pop_back();
-            }
-        }
-        if(G[curr.r][curr.c] == 0 && v.size() > 0){
-            break;
-        }
-    }
-    for(auto vv: v){
-        pos curr = m[vv];
-        G[curr.r][curr.c] = 0;
-    }
-}
+void copyBalls(){
+    // 상어 오른쪽에서 시작
+    pos curr = {(N+1)/2, (N+1)/2 -1};
 
-void moveBalls(){
-    int posDiff = 0;
-    for(int i=1; i<N*N; ++i){
-        pos curr = m[i];
-        if(posDiff+i >= N*N) break;
-        pos next = m[i+posDiff];
-        while(G[next.r][next.c] == 0 && !outOfBound(next.r, next.c)) {
-            ++posDiff;
-            next = m[i+posDiff];
-        }
-        G[curr.r][curr.c] = G[next.r][next.c];
-    }
-    while(posDiff--){
-        pos curr = m[N*N-1-posDiff];
-        G[curr.r][curr.c] = 0;
-    }
-    removeTails();
-}
+    // 상어는 넣어주고 시작
+    queue<int> q; q.push(0);
+    queue<int> sameQ;
+    // 상어 오른쪽도 넣어주고 시작
+    sameQ.push(G[curr.r][curr.c]);
 
-void countBoomGroup(int ballNum, int boomCnt){
-    if(ballNum == 1){
-        g1 += boomCnt;
-    }
-    if(ballNum == 2){
-        g2 += boomCnt;
-    }
-    if(ballNum == 3){
-        g3 += boomCnt;
-    }
-}
+    while(true){
+        // r<1 || c<1 || r>N || c>N;
+        if(isOutOfBound(curr.r, curr.c)) break;
+        // 복사기 때문에 0을 만나면 멈춘다.
+        if(G[curr.r][curr.c] == 0) break;
 
-bool boomBalls(){
-    int ballNum = G[m[1].r][m[1].c];
-    int idx = 1;
-    int boomCnt = 1;
-    bool flag = false;
-    for(int i=2; i<N*N; ++i){
-        pos curr = m[i];
-        int currBallNum = G[curr.r][curr.c];
-        if(ballNum == currBallNum){
-            ++boomCnt;
+        // 같은 구슬들 번호
+        int beforeNum = sameQ.front();
+        // 상하좌우 움직여야하는 dir의 index
+        int dirIdx = getMoveDir(curr.r, curr.c);
+
+        // 다음 칸의 r, c
+        pos next = {curr.r+dir[dirIdx][0], curr.c+dir[dirIdx][1]};
+
+        // 다음 칸의 
+        int currNum = G[next.r][next.c];
+        
+        curr = next;
+        
+        if(beforeNum == currNum){
+            sameQ.push(currNum);
             continue;
         }
 
-        ballNum = currBallNum;
-        if(currBallNum == 0){
-            if(boomCnt >= 4){
-                int tempI = i-1;
-                flag = true;
-                ballNum = G[m[tempI].r][m[tempI].c];
-                countBoomGroup(ballNum, boomCnt);
-                while(boomCnt--){
-                    pos now = m[tempI--];
-                    G[now.r][now.c] = 0;
-                }
-            } else{
-                boomCnt = 0;
-            }
-            break;
+        q.push(sameQ.size());
+        q.push(sameQ.front());
+        while(!sameQ.empty()){
+            sameQ.pop();
         }
-        if(boomCnt >= 4){
-            int tempI = i-1;
-            flag = true;
-            int removeBallNum = G[m[tempI].r][m[tempI].c];
-            countBoomGroup(removeBallNum, boomCnt);
-            while(boomCnt--){
-                pos now = m[tempI--];
-                G[now.r][now.c] = 0;
-            }
-        }
-        boomCnt = 1;
+        sameQ.push(currNum);
     }
-    
-    if(boomCnt >= 4){
-        int tempI = N*N-1;
-        countBoomGroup(ballNum, boomCnt);
-        while(boomCnt--){
-            pos now = m[tempI--];
-            G[now.r][now.c] = 0;
+    if(!sameQ.empty() && sameQ.front() != 0){
+        q.push(sameQ.size());
+        q.push(sameQ.front());
+        while(!sameQ.empty()){
+            sameQ.pop();
         }
     }
 
-    return flag;
-}
-
-void changeBalls(){
-    queue<group> q;
-    int ballNum = G[m[1].r][m[1].c];
-    int sameBallCnt = 1;
-    for(int i=2; i<N*N; ++i){
-        pos curr = m[i];
-        int currBallNum = G[curr.r][curr.c];
-        if(currBallNum == 0){
-            q.push({ballNum, sameBallCnt});
-            sameBallCnt = 0;
-            break;
-        }
-        if(ballNum == currBallNum){
-            ++sameBallCnt;
-            continue;
-        }
-        q.push({ballNum, sameBallCnt});
-        ballNum = currBallNum;
-        sameBallCnt = 1;
-    }
-    if(sameBallCnt >= 1){
-        q.push({ballNum, sameBallCnt});
-    }
-
-    int idx = 1;
-    while(!q.empty()){
-        group currGroup = q.front(); q.pop();
-        if(idx > N*N) break;
-        pos cntPos = m[idx++];
-        pos groupPos = m[idx++];
-        G[cntPos.r][cntPos.c] = currGroup.cnt;
-        G[groupPos.r][groupPos.c] = currGroup.g;
-    }
+    moveG(q);
 }
 
 void solve(){
-    getInputs();
-    setChangeDirPos();
-    setGIndex();
-    for(int i=0; i<M; ++i){
-        blizard(i);
-        // cout << "\nafter blizard\n"; printG();
-        moveBalls();
-        // cout << "\nafter move balls\n"; printG();
-        while(boomBalls()){
-            // cout << "\nafter boom balls\n"; printG();
-            moveBalls();
-            // cout << "\nafter move balls\n"; printG();
-        };
-        changeBalls();
-        // cout << "\nafter change balls\n"; printG();
-    }
-    cout << g1+2*g2+3*g3 << "\n";
+  getInputs();
+  for(auto magic: ds){
+      blizard(magic.d, magic.s);
+      cout << "bliz\n";
+      printG();
+      while(boom()){};
+      cout << "boom\n";
+      printG();
+      copyBalls();
+      cout << "compress\n";
+      printG();
+  }
+  cout << ones + 2*twos + 3*threes << "\n";
 }
 
 int main(){
-    ios::sync_with_stdio(false);
-    cin.tie(0);
+  ios::sync_with_stdio(false);
+  cin.tie(0);
 
-    solve();
+  solve();
 
-    return 0;
+  return 0;
 }
