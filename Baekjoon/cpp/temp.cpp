@@ -78,13 +78,10 @@ void printG(){
 int main() {
   ios::sync_with_stdio(false);
   cin.tie(0);
-  
-  cin >> N;
-  makeG(false);
-  printG();
-  makeG(true);
-  cout << "\n======\n";
-  printG();
 
+  // int n=4;
+  char a[] = "Art";
+  char* p = a;
+  printf("%s", *a);
   return 0;
 }
