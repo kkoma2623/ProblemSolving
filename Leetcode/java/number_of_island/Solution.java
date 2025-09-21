@@ -1,4 +1,4 @@
-package LeetCode.number_of_island;
+package number_of_island;
 
 import java.util.ArrayDeque;
 
