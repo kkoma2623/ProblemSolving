@@ -41,12 +41,11 @@ class Solution {
 			if (visit[preCourse]) {
 				continue;
 			}
-			System.out.println("preCourse: " + preCourse);
 			visit[preCourse] = true;
 			visited.offer(preCourse);
 			dim[preCourse] = -1;
 			decreaseDim(prerequisites, preCourse, dim);
-			find0Dim(prerequisites.length, dim, queue);
+			find0Dim(numCourses, dim, queue);
 		}
 
 		if (visited.size() == numCourses) {
